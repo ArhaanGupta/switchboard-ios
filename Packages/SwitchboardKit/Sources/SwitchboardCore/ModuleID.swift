@@ -9,6 +9,7 @@ public enum ModuleID: String, CaseIterable, Codable, Sendable, Identifiable, Has
     case shareAnywhere
     case floatingWindow
     case qrCode
+    case appLock
 
     public var id: String { rawValue }
 
@@ -16,7 +17,7 @@ public enum ModuleID: String, CaseIterable, Codable, Sendable, Identifiable, Has
     public var enabledByDefault: Bool {
         switch self {
         case .clipboard, .stickyNotes, .floatingWindow, .qrCode: return true
-        case .shield, .shareAnywhere: return false
+        case .shield, .shareAnywhere, .appLock: return false
         }
     }
 }

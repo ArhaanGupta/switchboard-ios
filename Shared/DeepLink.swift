@@ -9,6 +9,7 @@ enum DeepLink: Equatable {
     case floating(String)        // floating mode raw value
     case receiveFiles
     case scanQR
+    case unlockApp
 
     static let scheme = "switchboard"
 
@@ -34,6 +35,9 @@ enum DeepLink: Equatable {
         case .scanQR:
             components.host = "qr"
             components.path = "/scan"
+        case .unlockApp:
+            components.host = "applock"
+            components.path = "/unlock"
         }
         return components.url!
     }
@@ -50,6 +54,7 @@ enum DeepLink: Equatable {
         case ("floating", let mode): self = .floating(mode)
         case ("share", "receive"): self = .receiveFiles
         case ("qr", "scan"): self = .scanQR
+        case ("applock", "unlock"): self = .unlockApp
         default: return nil
         }
     }
@@ -62,6 +67,7 @@ enum DeepLink: Equatable {
         case .floating: return .floatingWindow
         case .receiveFiles: return .shareAnywhere
         case .scanQR: return .qrCode
+        case .unlockApp: return .appLock
         }
     }
 }

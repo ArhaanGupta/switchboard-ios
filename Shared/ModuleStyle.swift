@@ -12,6 +12,7 @@ extension ModuleID {
         case .shareAnywhere: "Share Anywhere"
         case .floatingWindow: "Floating Window"
         case .qrCode: "QR Codes"
+        case .appLock: "App Lock"
         }
     }
 
@@ -23,6 +24,7 @@ extension ModuleID {
         case .shareAnywhere: "Send files to Windows, Linux & Android"
         case .floatingWindow: "Timers & notes that float over apps"
         case .qrCode: "Scan history, Wi-Fi & contact codes"
+        case .appLock: "Face ID on any app you choose"
         }
     }
 
@@ -34,6 +36,7 @@ extension ModuleID {
         case .shareAnywhere: "dot.radiowaves.left.and.right"
         case .floatingWindow: "pip.fill"
         case .qrCode: "qrcode.viewfinder"
+        case .appLock: "lock.fill"
         }
     }
 
@@ -45,6 +48,7 @@ extension ModuleID {
         case .shareAnywhere: .blue
         case .floatingWindow: .purple
         case .qrCode: .teal
+        case .appLock: .indigo
         }
     }
 
@@ -57,6 +61,7 @@ extension ModuleID {
         case .shareAnywhere: "Quick Share"
         case .floatingWindow: "Bubbles & floating windows"
         case .qrCode: "Wi-Fi QR sharing & scan history"
+        case .appLock: "App lock"
         }
     }
 }
