@@ -41,7 +41,7 @@ final class FloatingController: NSObject {
     private(set) var pausedRemaining: TimeInterval?
     private(set) var stopwatchStart: Date?
     private(set) var stopwatchAccumulated: TimeInterval = 0
-    private var teleprompterOffset: CGFloat = 0
+    private(set) var teleprompterOffset: CGFloat = 0
     private var lastTick = Date()
 
     /// Readable from PiP callbacks on any thread.

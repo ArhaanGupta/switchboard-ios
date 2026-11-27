@@ -81,7 +81,24 @@ struct FloatingScreen: View {
         @Bindable var floating = app.floating
         ScrollView {
             VStack(spacing: 18) {
-                FloatingLayerView(controller: floating)
+                ZStack {
+                    // PiP's video source must stay in the view hierarchy...
+                    FloatingLayerView(controller: floating)
+                    // ...but the inline preview is drawn directly so it always shows.
+                    TimelineView(.animation(minimumInterval: 1.0 / 15.0)) { _ in
+                        FloatingContentView(
+                            mode: floating.mode,
+                            timerRemaining: floating.timerRemaining,
+                            stopwatchElapsed: floating.stopwatchElapsed,
+                            note: floating.noteText,
+                            script: floating.teleprompterText,
+                            scrollOffset: floating.teleprompterOffset,
+                            isRunning: floating.isRunning,
+                            accent: floating.accent
+                        )
+                    }
+                    .allowsHitTesting(false)
+                }
                     .aspectRatio(16 / 9, contentMode: .fit)
                     .clipShape(.rect(cornerRadius: 22, style: .continuous))
                     .shadow(color: .purple.opacity(0.3), radius: 16, y: 8)
