@@ -84,3 +84,19 @@ final class ReceiveSessionTests: XCTestCase {
         XCTAssertEqual(FileNaming.uniqueURL(for: "a.jpg", in: dir, exists: { taken.contains($0.path) }).lastPathComponent, "a 3.jpg")
     }
 }
+
+final class NetworkInterfaceTests: XCTestCase {
+    func testSubnetAroundAddress() throws {
+        let subnet = try XCTUnwrap(NetworkInterfaces.subnet(around: "192.168.4.27"))
+        XCTAssertEqual(subnet.hosts.count, 254)
+        XCTAssertEqual(subnet.hosts.first, "192.168.4.1")
+        XCTAssertEqual(subnet.hosts.last, "192.168.4.254")
+        XCTAssertNil(NetworkInterfaces.subnet(around: "not.an.ip.addr"))
+        XCTAssertNil(NetworkInterfaces.subnet(around: "300.1.1.1"))
+    }
+
+    func testClientKeepsDeviceInfo() {
+        let me = DeviceInfo(alias: "Test", fingerprint: "abc")
+        XCTAssertEqual(LocalSendClient(me: me).me, me)
+    }
+}
