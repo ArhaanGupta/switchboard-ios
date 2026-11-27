@@ -55,6 +55,15 @@ final class FloatingController: NSObject {
     override init() {
         super.init()
         displayLayer.videoGravity = .resizeAspect
+        // Without a running timebase the layer may never present frames.
+        var timebase: CMTimebase?
+        let clock = CMClockGetHostTimeClock()
+        if CMTimebaseCreateWithSourceClock(allocator: kCFAllocatorDefault, sourceClock: clock,
+                                           timebaseOut: &timebase) == noErr, let timebase {
+            CMTimebaseSetTime(timebase, time: CMClockGetTime(clock))
+            CMTimebaseSetRate(timebase, rate: 1)
+            displayLayer.controlTimebase = timebase
+        }
     }
 
     // MARK: Setup
