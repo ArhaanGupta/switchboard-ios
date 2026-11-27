@@ -17,6 +17,7 @@ Inspired by [Essentials](https://github.com/sameerasw/essentials) for Android. E
 | **Share Anywhere** | Send/receive files with Windows, Linux, macOS and Android, including straight from the share sheet | Quick Share | Implements the open [LocalSend protocol](https://github.com/localsend/protocol) + share extension |
 | **Floating Window** | Timer, stopwatch, note or teleprompter floating over other apps | Bubbles / floating windows | Picture-in-Picture fed by a live-rendered SwiftUI view |
 | **QR Codes** | Scan history, scan from photos, create Wi-Fi / contact / link codes | Wi-Fi QR sharing | VisionKit live scanner + Vision + Core Image |
+| **App Lock** | Face ID on any app or category, auto re-lock after 15 min–2 h | App lock | Screen Time APIs (FamilyControls, ManagedSettings, DeviceActivity). iOS enforces the lock, with zero background work |
 
 ## Screenshots
 
@@ -25,8 +26,8 @@ Inspired by [Essentials](https://github.com/sameerasw/essentials) for Android. E
 | <img src="docs/screenshots/01-Home.png" width="250"> | <img src="docs/screenshots/02-Clipboard.png" width="250"> | <img src="docs/screenshots/03-StickyNotes.png" width="250"> |
 | **Ad Shield** | **Share Anywhere** | **Floating Window** |
 | <img src="docs/screenshots/04-Shield.png" width="250"> | <img src="docs/screenshots/05-ShareAnywhere.png" width="250"> | <img src="docs/screenshots/06-FloatingWindow.png" width="250"> |
-| **QR Codes** | | |
-| <img src="docs/screenshots/07-QRCodes.png" width="250"> | | |
+| **QR Codes** | **App Lock** | |
+| <img src="docs/screenshots/07-QRCodes.png" width="250"> | <img src="docs/screenshots/08-AppLock.png" width="250"> | |
 
 *Captured automatically by the UI tests in CI.*
 
@@ -60,6 +61,7 @@ Then in `project.yml` (re-run `xcodegen generate` afterwards):
 |---|---|---|
 | App Groups | all targets | Shares data between the app, keyboard, widgets and tunnel |
 | Network Extensions → Packet Tunnel | app + Shield | Ad Shield |
+| Family Controls | app + 3 App Lock extensions | App Lock. Works for development right away; App Store distribution needs Apple's approval (request it at developer.apple.com/contact/request/family-controls-distribution) |
 | Multicast Networking *(optional)* | app | Faster LocalSend discovery. Request it at developer.apple.com/contact/request/networking-multicast, then add `com.apple.developer.networking.multicast` to the app's entitlements. Without it, Switchboard scans the subnet instead |
 
 ## Architecture
@@ -77,6 +79,8 @@ Extensions/Keyboard             Clipboard keyboard
 Extensions/Widgets              Sticky note widget, Live Activity, Control Center controls
 Extensions/Shield               DNS filtering packet tunnel
 Extensions/ShareExtension       "Send with Switchboard" share sheet
+Extensions/AppLock*             Lock screen UI, its button handler, and the re-lock timer
+Shared/AppLock                  App Lock engine shared by the app and its extensions
 UITests/                        Launches the app, opens every module, captures screenshots
 ```
 
@@ -93,6 +97,7 @@ UITests/                        Launches the app, opens every module, captures s
 - **Live Activities** last up to 8 hours (12 on the Lock Screen). Use the widget for a note that stays permanently.
 - **Ad Shield** uses the VPN slot, so it can't run alongside another VPN. If blocking stops on cellular, turn off *Connectivity Assist* (iOS 27).
 - **Share Anywhere** receives only while the app is open. It receives over plain HTTP and sends over HTTPS when the other device uses it.
+- **App Lock** needs a real iPhone (Screen Time APIs don't work in the Simulator). The shortest unlock window iOS allows is 15 minutes.
 - **Floating Window** needs Picture-in-Picture turned on. App Review sometimes questions PiP used for non-video content, so explain the use case in your review notes.
 
 ## Status
