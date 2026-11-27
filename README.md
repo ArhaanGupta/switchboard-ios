@@ -14,8 +14,18 @@ Inspired by [Essentials](https://github.com/sameerasw/essentials) for Android. E
 | **Clipboard** | Clipboard history, pinned clips, snippets with `{date}`/`{clipboard}` tokens | Gboard clipboard | Custom keyboard extension (captures while visible) + Paste button + Control Center control |
 | **Sticky Notes** | Notes & checklists on the Lock Screen, Dynamic Island and widgets; tick items without opening the app | Persistent notifications | Live Activity + interactive WidgetKit widget + App Intents |
 | **Ad Shield** | Blocks ad/tracker domains in **every app**, with blocklists, allow/block rules and a live log | Private DNS / AdGuard | On-device DNS-only packet tunnel (Network Extension) |
-| **Share Anywhere** | Send/receive files with Windows, Linux, macOS and Android | Quick Share | Implements the open [LocalSend protocol](https://github.com/localsend/protocol) |
+| **Share Anywhere** | Send/receive files with Windows, Linux, macOS and Android, including straight from the share sheet | Quick Share | Implements the open [LocalSend protocol](https://github.com/localsend/protocol) + share extension |
 | **Floating Window** | Timer, stopwatch, note or teleprompter floating over other apps | Bubbles / floating windows | Picture-in-Picture fed by a live-rendered SwiftUI view |
+
+## Screenshots
+
+| Home | Clipboard | Sticky Notes |
+|---|---|---|
+| <img src="docs/screenshots/01-Home.png" width="250"> | <img src="docs/screenshots/02-Clipboard.png" width="250"> | <img src="docs/screenshots/03-StickyNotes.png" width="250"> |
+| **Ad Shield** | **Share Anywhere** | **Floating Window** |
+| <img src="docs/screenshots/04-Shield.png" width="250"> | <img src="docs/screenshots/05-ShareAnywhere.png" width="250"> | <img src="docs/screenshots/06-FloatingWindow.png" width="250"> |
+
+*Captured automatically by the UI tests in CI.*
 
 iOS 26/27 already covers spam call screening, call recording, battery charge limits, duplicate photo detection and ZIP files, so Switchboard leaves those out.
 
@@ -62,6 +72,8 @@ Shared/                         Code compiled into both app and widgets (deep li
 Extensions/Keyboard             Clipboard keyboard
 Extensions/Widgets              Sticky note widget, Live Activity, Control Center controls
 Extensions/Shield               DNS filtering packet tunnel
+Extensions/ShareExtension       "Send with Switchboard" share sheet
+UITests/                        Launches the app, opens every module, captures screenshots
 ```
 
 ### Adding a module
