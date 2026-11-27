@@ -24,8 +24,10 @@ struct ModuleScreen: View {
                     set: { model.setEnabled($0, for: module) }
                 ))
                 .labelsHidden()
+                .toggleStyle(.switch)
                 .tint(module.tint)
             }
+            .sharedBackgroundVisibility(.hidden)
         }
         .animation(.smooth, value: model.isEnabled(module))
     }
