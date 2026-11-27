@@ -156,11 +156,28 @@ targets:
       - package: SwitchboardKit
         product: ShieldCore
 
+  SwitchboardUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - UITests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(BASE_BUNDLE_ID).UITests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: Switchboard
+    dependencies:
+      - target: Switchboard
+
 schemes:
   Switchboard:
     build:
       targets:
         Switchboard: all
+        SwitchboardUITests: [test]
+    test:
+      targets:
+        - SwitchboardUITests
     run:
       config: Debug
     archive:
