@@ -143,9 +143,14 @@ struct ClipboardScreen: View {
                       detail: "Lets the keyboard read and save your clipboard and sync with the app. Switchboard has no network code in the keyboard. Your clips never leave the device.",
                       done: model.keyboardHasFullAccess,
                       actionTitle: "Open Settings") { openSettings() }
-            SetupStep(title: "Switch to it with 🌐",
-                      detail: "Tap or hold the globe key in any app. Your clips and snippets appear in one tap.",
+            SetupStep(title: "Use it in any app",
+                      detail: "In WhatsApp, Signal, Instagram, Messages or any text box, tap 🌐 to bring up your clips, then tap one to paste it.",
                       done: model.keyboardSeen)
+            Toggle("Switch back after pasting", isOn: Binding(
+                get: { model.returnAfterPaste },
+                set: { model.returnAfterPaste = $0 }
+            ))
+                .tint(ModuleID.clipboard.tint)
         }
 
         Section {

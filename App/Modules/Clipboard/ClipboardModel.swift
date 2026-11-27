@@ -13,8 +13,14 @@ final class ClipboardModel {
     private(set) var snippets: [Snippet] = []
     private(set) var settings = ClipboardSettings()
     var query = ""
+    var returnAfterPaste: Bool {
+        didSet { defaults.set(returnAfterPaste, forKey: SharedKey.keyboardReturnAfterPaste) }
+    }
 
-    init() { reload() }
+    init() {
+        returnAfterPaste = AppGroup.defaults.object(forKey: SharedKey.keyboardReturnAfterPaste) as? Bool ?? true
+        reload()
+    }
 
     var filteredItems: [ClipItem] {
         let q = query.trimmingCharacters(in: .whitespaces)
