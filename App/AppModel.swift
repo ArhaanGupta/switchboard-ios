@@ -17,6 +17,7 @@ final class AppModel {
     let share = LocalSendService()
     let floating = FloatingController()
     let qr = QRModel()
+    let appLock = AppLockModel()
 
     struct Toast: Identifiable, Equatable {
         let id = UUID()
@@ -37,6 +38,7 @@ final class AppModel {
         enabled[module] = on
         flags.setEnabled(on, for: module)
         Haptics.tap()
+        if on, module == .appLock { appLock.moduleEnabled() }
         if !on { tearDown(module) }
     }
 
@@ -53,6 +55,8 @@ final class AppModel {
             floating.stop()
         case .qrCode:
             break
+        case .appLock:
+            appLock.moduleDisabled()
         }
     }
 
@@ -62,6 +66,7 @@ final class AppModel {
         clipboard.reload()
         sticky.reload()
         qr.reload()
+        appLock.reload()
         if isEnabled(.clipboard) { clipboard.captureOnOpenIfNeeded() }
         if isEnabled(.shield) { Task { await shield.refresh() } }
     }
@@ -86,6 +91,8 @@ final class AppModel {
             share.start()
         case .scanQR:
             qr.presented = nil
+        case .unlockApp:
+            appLock.reload()
         case .module:
             break
         }

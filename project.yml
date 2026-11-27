@@ -50,6 +50,7 @@ targets:
         UIBackgroundModes: [audio]          # required for Picture-in-Picture (Floating Window)
         UIFileSharingEnabled: true          # received files show up in the Files app
         LSSupportsOpeningDocumentsInPlace: true
+        NSFaceIDUsageDescription: Switchboard uses Face ID to unlock apps you've locked.
         NSCameraUsageDescription: Switchboard uses the camera to scan QR codes.
         NSPhotoLibraryUsageDescription: Switchboard reads QR codes from photos you choose.
         NSLocalNetworkUsageDescription: Switchboard finds nearby computers and phones running LocalSend so you can send and receive files.
@@ -63,6 +64,7 @@ targets:
       properties:
         com.apple.security.application-groups: [$(APP_GROUP_ID)]
         com.apple.developer.networking.networkextension: [packet-tunnel-provider]
+        com.apple.developer.family-controls: true
     dependencies:
       - package: SwitchboardKit
         product: SwitchboardCore
@@ -78,6 +80,9 @@ targets:
       - target: SwitchboardWidgets
       - target: SwitchboardShield
       - target: SwitchboardShare
+      - target: AppLockShieldUI
+      - target: AppLockShieldAction
+      - target: AppLockMonitor
 
   SwitchboardKeyboard:
     type: app-extension
@@ -115,7 +120,8 @@ targets:
     platform: iOS
     sources:
       - Extensions/Widgets
-      - Shared
+      - path: Shared
+        excludes: ["AppLock/**"]
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: $(BASE_BUNDLE_ID).Widgets
@@ -196,6 +202,84 @@ targets:
         product: SwitchboardCore
       - package: SwitchboardKit
         product: LocalSendCore
+
+  AppLockShieldUI:
+    type: app-extension
+    platform: iOS
+    sources:
+      - Extensions/AppLockShieldUI
+      - Shared/AppLock
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(BASE_BUNDLE_ID).AppLockShieldUI
+    info:
+      path: Extensions/AppLockShieldUI/Info.plist
+      properties:
+        CFBundleDisplayName: Switchboard App Lock
+        SBAppGroupID: $(APP_GROUP_ID)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.ManagedSettingsUI.shield-configuration-service
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShieldConfigurationExtension
+    entitlements:
+      path: Extensions/AppLockShieldUI/AppLockShieldUI.entitlements
+      properties:
+        com.apple.security.application-groups: [$(APP_GROUP_ID)]
+        com.apple.developer.family-controls: true
+    dependencies:
+      - package: SwitchboardKit
+        product: SwitchboardCore
+
+  AppLockShieldAction:
+    type: app-extension
+    platform: iOS
+    sources:
+      - Extensions/AppLockShieldAction
+      - Shared/AppLock
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(BASE_BUNDLE_ID).AppLockShieldAction
+    info:
+      path: Extensions/AppLockShieldAction/Info.plist
+      properties:
+        CFBundleDisplayName: Switchboard App Lock
+        SBAppGroupID: $(APP_GROUP_ID)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.ManagedSettings.shield-action-service
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShieldActionExtension
+    entitlements:
+      path: Extensions/AppLockShieldAction/AppLockShieldAction.entitlements
+      properties:
+        com.apple.security.application-groups: [$(APP_GROUP_ID)]
+        com.apple.developer.family-controls: true
+    dependencies:
+      - package: SwitchboardKit
+        product: SwitchboardCore
+
+  AppLockMonitor:
+    type: app-extension
+    platform: iOS
+    sources:
+      - Extensions/AppLockMonitor
+      - Shared/AppLock
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(BASE_BUNDLE_ID).AppLockMonitor
+    info:
+      path: Extensions/AppLockMonitor/Info.plist
+      properties:
+        CFBundleDisplayName: Switchboard App Lock
+        SBAppGroupID: $(APP_GROUP_ID)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.deviceactivity.monitor-extension
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).AppLockMonitorExtension
+    entitlements:
+      path: Extensions/AppLockMonitor/AppLockMonitor.entitlements
+      properties:
+        com.apple.security.application-groups: [$(APP_GROUP_ID)]
+        com.apple.developer.family-controls: true
+    dependencies:
+      - package: SwitchboardKit
+        product: SwitchboardCore
 
   SwitchboardUITests:
     type: bundle.ui-testing
