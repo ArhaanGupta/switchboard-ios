@@ -12,16 +12,19 @@ let package = Package(
         .library(name: "ClipboardCore", targets: ["ClipboardCore"]),
         .library(name: "ShieldCore", targets: ["ShieldCore"]),
         .library(name: "LocalSendCore", targets: ["LocalSendCore"]),
+        .library(name: "QRCore", targets: ["QRCore"]),
     ],
     targets: [
         .target(name: "SwitchboardCore"),
         .target(name: "ClipboardCore", dependencies: ["SwitchboardCore"]),
         .target(name: "ShieldCore"),
         .target(name: "LocalSendCore"),
+        .target(name: "QRCore"),
         .testTarget(name: "SwitchboardCoreTests", dependencies: ["SwitchboardCore"]),
         .testTarget(name: "ClipboardCoreTests", dependencies: ["ClipboardCore"]),
         .testTarget(name: "ShieldCoreTests", dependencies: ["ShieldCore"]),
         .testTarget(name: "LocalSendCoreTests", dependencies: ["LocalSendCore"]),
+        .testTarget(name: "QRCoreTests", dependencies: ["QRCore"]),
     ],
     swiftLanguageModes: [.v5]
 )
