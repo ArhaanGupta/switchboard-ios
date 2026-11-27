@@ -101,6 +101,7 @@ struct ModuleCard: View {
         .onTapGesture { model.path.append(module) }
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isButton)
+        .accessibilityIdentifier("module.\(module.rawValue)")
         .accessibilityHint("Opens \(module.title) settings")
     }
 }
