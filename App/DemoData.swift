@@ -1,5 +1,6 @@
 import ClipboardCore
 import Foundation
+import QRCore
 import ShieldCore
 import SwitchboardCore
 
@@ -19,6 +20,21 @@ enum DemoData {
         seedClipboard()
         seedNotes()
         seedShieldStats()
+        seedQRHistory()
+    }
+
+    private static func seedQRHistory() {
+        var history = QRHistory()
+        let now = Date()
+        let samples: [(String, QRHistoryItem.Source, TimeInterval)] = [
+            ("BEGIN:VCARD\nVERSION:3.0\nFN:Maya Chen\nTEL:+1 415 555 0134\nEND:VCARD", .scanned, -60 * 60 * 30),
+            ("https://menu.bluebottlecafe.example/today", .scanned, -60 * 60 * 4),
+            ("WIFI:T:WPA;S:Home Studio;P:maple-harbor-42;;", .created, -60 * 25),
+            ("https://github.com/ArhaanGupta/switchboard-ios", .scanned, -60 * 3),
+        ]
+        for (raw, source, offset) in samples { history.record(raw, source: source, date: now.addingTimeInterval(offset)) }
+        history.items[1].isFavorite = true
+        try? JSONFile<QRHistory>(name: "qr-history.json").save(history)
     }
 
     private static func seedClipboard() {

@@ -16,6 +16,7 @@ Inspired by [Essentials](https://github.com/sameerasw/essentials) for Android. E
 | **Ad Shield** | Blocks ad/tracker domains in **every app**, with blocklists, allow/block rules and a live log | Private DNS / AdGuard | On-device DNS-only packet tunnel (Network Extension) |
 | **Share Anywhere** | Send/receive files with Windows, Linux, macOS and Android, including straight from the share sheet | Quick Share | Implements the open [LocalSend protocol](https://github.com/localsend/protocol) + share extension |
 | **Floating Window** | Timer, stopwatch, note or teleprompter floating over other apps | Bubbles / floating windows | Picture-in-Picture fed by a live-rendered SwiftUI view |
+| **QR Codes** | Scan history, scan from photos, create Wi-Fi / contact / link codes | Wi-Fi QR sharing | VisionKit live scanner + Vision + Core Image |
 
 ## Screenshots
 
@@ -24,6 +25,8 @@ Inspired by [Essentials](https://github.com/sameerasw/essentials) for Android. E
 | <img src="docs/screenshots/01-Home.png" width="250"> | <img src="docs/screenshots/02-Clipboard.png" width="250"> | <img src="docs/screenshots/03-StickyNotes.png" width="250"> |
 | **Ad Shield** | **Share Anywhere** | **Floating Window** |
 | <img src="docs/screenshots/04-Shield.png" width="250"> | <img src="docs/screenshots/05-ShareAnywhere.png" width="250"> | <img src="docs/screenshots/06-FloatingWindow.png" width="250"> |
+| **QR Codes** | | |
+| <img src="docs/screenshots/07-QRCodes.png" width="250"> | | |
 
 *Captured automatically by the UI tests in CI.*
 
@@ -66,7 +69,8 @@ Packages/SwitchboardKit/        Pure Swift logic, unit tested
   SwitchboardCore               ModuleID, FeatureFlags, App Group storage, sticky notes store
   ClipboardCore                 Clipboard history store, snippets, template tokens
   ShieldCore                    DNS parser/responder, IPv4/UDP packets, blocklist parser, stats
-  LocalSendCore                 LocalSend models, HTTP parser, receive-session state machine
+  LocalSendCore                 LocalSend models, HTTP parser, receive sessions, LocalSendClient
+  QRCore                        QR payload encoding/parsing (Wi-Fi, vCard, links) and history
 App/                            SwiftUI app (home grid + one screen per module)
 Shared/                         Code compiled into both app and widgets (deep links, Live Activity, intents)
 Extensions/Keyboard             Clipboard keyboard

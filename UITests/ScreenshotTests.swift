@@ -9,6 +9,7 @@ final class ScreenshotTests: XCTestCase {
         ("shield", "04-Shield"),
         ("shareAnywhere", "05-ShareAnywhere"),
         ("floatingWindow", "06-FloatingWindow"),
+        ("qrCode", "07-QRCodes"),
     ]
 
     override func setUp() {
