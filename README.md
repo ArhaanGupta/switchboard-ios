@@ -1,5 +1,10 @@
 # Switchboard
 
+[![CI](https://github.com/ArhaanGupta/switchboard-ios/actions/workflows/ci.yml/badge.svg)](https://github.com/ArhaanGupta/switchboard-ios/actions/workflows/ci.yml)
+![iOS 26+](https://img.shields.io/badge/iOS-26%2B-blue)
+![Swift](https://img.shields.io/badge/Swift-SwiftUI-orange)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 **Android-style power features for iPhone, in one app, each one switchable on or off.**
 
 Inspired by [Essentials](https://github.com/sameerasw/essentials) for Android. Every feature is a *module*, and you turn on only the ones you want. Built for iOS 26+ with SwiftUI and Liquid Glass.
@@ -76,4 +81,4 @@ Extensions/Shield               DNS filtering packet tunnel
 
 ## Status
 
-Written without access to a Mac, so it hasn't yet been compiled with Xcode. The CI workflow is the first real build. Expect a few fixes on the first run.
+CI builds the app and all extensions and runs the package unit tests on every push. Features that need real hardware (the Ad Shield tunnel, Picture-in-Picture, LocalSend transfers) still need testing on an iPhone.
