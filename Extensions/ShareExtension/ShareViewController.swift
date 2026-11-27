@@ -92,11 +92,12 @@ final class ShareExtensionModel {
             return writeText(text, name: "Text.txt")
         }
         guard let type = provider.registeredTypeIdentifiers.first else { return nil }
+        let suggestedName = provider.suggestedName
         return await withCheckedContinuation { continuation in
             _ = provider.loadFileRepresentation(forTypeIdentifier: type) { url, _ in
                 // The provided file is deleted when this handler returns, so copy it now.
                 guard let url else { return continuation.resume(returning: nil) }
-                let name = provider.suggestedName.map { name in
+                let name = suggestedName.map { name in
                     url.pathExtension.isEmpty || name.hasSuffix(".\(url.pathExtension)") ? name : "\(name).\(url.pathExtension)"
                 } ?? url.lastPathComponent
                 continuation.resume(returning: copyToTemp(url, name: name))
@@ -104,18 +105,18 @@ final class ShareExtensionModel {
         }
     }
 
-    private static func tempDirectory() -> URL {
+    nonisolated private static func tempDirectory() -> URL {
         let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir
     }
 
-    private static func copyToTemp(_ url: URL, name: String) -> URL? {
+    nonisolated private static func copyToTemp(_ url: URL, name: String) -> URL? {
         let dest = tempDirectory().appendingPathComponent(FileNaming.sanitized(name))
         return (try? FileManager.default.copyItem(at: url, to: dest)) != nil ? dest : nil
     }
 
-    private static func writeText(_ text: String, name: String) -> URL? {
+    nonisolated private static func writeText(_ text: String, name: String) -> URL? {
         let dest = tempDirectory().appendingPathComponent(name)
         return (try? text.write(to: dest, atomically: true, encoding: .utf8)) != nil ? dest : nil
     }
