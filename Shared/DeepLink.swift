@@ -8,6 +8,7 @@ enum DeepLink: Equatable {
     case newStickyNote
     case floating(String)        // floating mode raw value
     case receiveFiles
+    case scanQR
 
     static let scheme = "switchboard"
 
@@ -30,6 +31,9 @@ enum DeepLink: Equatable {
         case .receiveFiles:
             components.host = "share"
             components.path = "/receive"
+        case .scanQR:
+            components.host = "qr"
+            components.path = "/scan"
         }
         return components.url!
     }
@@ -45,6 +49,7 @@ enum DeepLink: Equatable {
         case ("sticky", "new"): self = .newStickyNote
         case ("floating", let mode): self = .floating(mode)
         case ("share", "receive"): self = .receiveFiles
+        case ("qr", "scan"): self = .scanQR
         default: return nil
         }
     }
@@ -56,6 +61,7 @@ enum DeepLink: Equatable {
         case .newStickyNote: return .stickyNotes
         case .floating: return .floatingWindow
         case .receiveFiles: return .shareAnywhere
+        case .scanQR: return .qrCode
         }
     }
 }

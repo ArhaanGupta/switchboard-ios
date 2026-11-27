@@ -8,13 +8,14 @@ public enum ModuleID: String, CaseIterable, Codable, Sendable, Identifiable, Has
     case shield
     case shareAnywhere
     case floatingWindow
+    case qrCode
 
     public var id: String { rawValue }
 
     /// Modules that need no system-level approval start enabled.
     public var enabledByDefault: Bool {
         switch self {
-        case .clipboard, .stickyNotes, .floatingWindow: return true
+        case .clipboard, .stickyNotes, .floatingWindow, .qrCode: return true
         case .shield, .shareAnywhere: return false
         }
     }
