@@ -62,7 +62,15 @@ final class LocalSendService {
     private var server: HTTPServer?
     private var multicast: NWConnectionGroup?
     private var pendingTransferID: UUID?
-    @ObservationIgnored private lazy var urlSession = URLSession(configuration: .ephemeral, delegate: LocalTrustDelegate(), delegateQueue: nil)
+    @ObservationIgnored private var cachedClient: LocalSendClient?
+
+    /// Rebuilt whenever our device info (e.g. the alias) changes.
+    private var client: LocalSendClient {
+        if let cachedClient, cachedClient.me == myInfo { return cachedClient }
+        let fresh = LocalSendClient(me: myInfo)
+        cachedClient = fresh
+        return fresh
+    }
 
     nonisolated static var receivedDirectory: URL {
         let dir = URL.documentsDirectory.appendingPathComponent("Received", isDirectory: true)
@@ -188,48 +196,16 @@ final class LocalSendService {
     /// Announce via multicast and, as a fallback, sweep the local /24 subnet.
     func refreshPeers() async {
         announce()
-        guard !isScanning, let subnet = NetworkInterfaces.localIPv4Subnet() else { return }
+        guard !isScanning else { return }
         isScanning = true
         defer { isScanning = false }
-        let me = myInfo
-        let session = urlSession
-        await withTaskGroup(of: Peer?.self) { group in
-            var launched = 0
-            for host in subnet.hosts where host != subnet.ownAddress {
-                if launched >= 48 { if let peer = await group.next() ?? nil { addPeer(peer) } }
-                group.addTask { await Self.probe(host: host, me: me, session: session) }
-                launched += 1
-            }
-            for await peer in group { if let peer { addPeer(peer) } }
+        await client.scanSubnet { [weak self] peer in
+            Task { @MainActor in self?.addPeer(peer) }
         }
-    }
-
-    nonisolated private static func probe(host: String, me: DeviceInfo, session: URLSession) async -> Peer? {
-        for scheme in ["https", "http"] {
-            guard let url = URL(string: "\(scheme)://\(host):\(LocalSend.defaultPort)\(LocalSend.Endpoint.register)") else { continue }
-            var request = URLRequest(url: url, timeoutInterval: 1.2)
-            request.httpMethod = "POST"
-            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            request.httpBody = try? JSONEncoder().encode(me)
-            if let result = try? await session.data(for: request),
-               (result.1 as? HTTPURLResponse)?.statusCode == 200,
-               var info = try? JSONDecoder().decode(DeviceInfo.self, from: result.0),
-               info.fingerprint != me.fingerprint {
-                info.transport = info.transport ?? scheme
-                info.port = info.port ?? Int(LocalSend.defaultPort)
-                return Peer(info: info, host: host)
-            }
-        }
-        return nil
     }
 
     private func register(with peer: Peer) async {
-        guard let base = peer.baseURL else { return }
-        var request = URLRequest(url: base.appendingPathComponent(LocalSend.Endpoint.register), timeoutInterval: 3)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try? JSONEncoder().encode(myInfo)
-        _ = try? await urlSession.data(for: request)
+        await client.register(with: peer)
     }
 
     // MARK: Server routing (runs on the server queue)
@@ -380,140 +356,37 @@ final class LocalSendService {
     // MARK: Sending
 
     func send(_ urls: [URL], to peer: Peer) async {
-        guard let base = peer.baseURL, !urls.isEmpty else { return }
-        var files: [String: FileMetadata] = [:]
-        var paths: [String: URL] = [:]
-        for url in urls {
-            let id = UUID().uuidString
-            let size = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize).flatMap { $0 }.map(Int64.init) ?? 0
-            files[id] = FileMetadata(id: id, fileName: url.lastPathComponent, size: size,
-                                     fileType: MIMEType.forFileName(url.lastPathComponent))
-            paths[id] = url
-        }
+        guard !urls.isEmpty else { return }
+        let sizes = urls.map { (try? $0.resourceValues(forKeys: [.fileSizeKey]).fileSize).flatMap { $0 } ?? 0 }
         let transfer = Transfer(peerName: peer.info.alias, direction: .outgoing,
-                                fileCount: files.count, totalBytes: files.values.reduce(0) { $0 + $1.size })
+                                fileCount: urls.count, totalBytes: Int64(sizes.reduce(0, +)))
         transfers.insert(transfer, at: 0)
         let transferID = transfer.id
 
-        func update(_ change: (inout Transfer) -> Void) {
-            guard let i = transfers.firstIndex(where: { $0.id == transferID }) else { return }
-            change(&transfers[i])
+        let result = await client.send(files: urls, to: peer) { [weak self] sent, _ in
+            Task { @MainActor in
+                guard let self, let i = self.transfers.firstIndex(where: { $0.id == transferID }) else { return }
+                self.transfers[i].doneBytes = sent
+            }
         }
 
-        do {
-            var request = URLRequest(url: base.appendingPathComponent(LocalSend.Endpoint.prepareUpload), timeoutInterval: 75)
-            request.httpMethod = "POST"
-            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            request.httpBody = try JSONEncoder().encode(PrepareUploadRequest(info: myInfo, files: files))
-            let (data, response) = try await urlSession.data(for: request)
-            let status = (response as? HTTPURLResponse)?.statusCode ?? 0
-            switch status {
-            case 200: break
-            case 204: update { $0.state = .done }; return
-            case 403: update { $0.state = .failed("Declined by \(peer.info.alias)") }; return
-            case 409: update { $0.state = .failed("\(peer.info.alias) is busy") }; return
-            default: update { $0.state = .failed("Error \(status)") }; return
-            }
-            let prepared = try JSONDecoder().decode(PrepareUploadResponse.self, from: data)
-
-            var completedBytes: Int64 = 0
-            for (fileId, token) in prepared.files {
-                guard let fileURL = paths[fileId], let meta = files[fileId] else { continue }
-                var components = URLComponents(url: base.appendingPathComponent(LocalSend.Endpoint.upload),
-                                               resolvingAgainstBaseURL: false)!
-                components.queryItems = [URLQueryItem(name: "sessionId", value: prepared.sessionId),
-                                         URLQueryItem(name: "fileId", value: fileId),
-                                         URLQueryItem(name: "token", value: token)]
-                var upload = URLRequest(url: components.url!, timeoutInterval: 600)
-                upload.httpMethod = "POST"
-                upload.setValue("application/octet-stream", forHTTPHeaderField: "Content-Type")
-                let alreadySent = completedBytes
-                let progress = UploadProgress { [weak self] sent in
-                    Task { @MainActor in
-                        guard let self, let i = self.transfers.firstIndex(where: { $0.id == transferID }) else { return }
-                        self.transfers[i].doneBytes = alreadySent + sent
-                    }
-                }
-                let (_, uploadResponse) = try await urlSession.upload(for: upload, fromFile: fileURL, delegate: progress)
-                guard (uploadResponse as? HTTPURLResponse)?.statusCode == 200 else {
-                    update { $0.state = .failed("\(meta.fileName) was rejected") }
-                    return
-                }
-                completedBytes += meta.size
-                update { $0.doneBytes = completedBytes }
-            }
-            update { $0.state = .done; $0.doneBytes = $0.totalBytes }
+        guard let i = transfers.firstIndex(where: { $0.id == transferID }) else { return }
+        switch result {
+        case .done:
+            transfers[i].state = .done
+            transfers[i].doneBytes = transfers[i].totalBytes
             Haptics.success()
-        } catch {
-            update { $0.state = .failed(error.localizedDescription) }
+        case .declined:
+            transfers[i].state = .failed("Declined by \(peer.info.alias)")
+        case .busy:
+            transfers[i].state = .failed("\(peer.info.alias) is busy")
+        case .failed(let reason):
+            transfers[i].state = .failed(reason)
         }
     }
+
 
     func clearFinishedTransfers() {
         transfers.removeAll { $0.state != .running }
-    }
-}
-
-/// Accepts the self-signed certificates LocalSend peers use on the local
-/// network. Only used for LocalSend traffic to LAN addresses.
-private final class LocalTrustDelegate: NSObject, URLSessionDelegate {
-    func urlSession(_ session: URLSession, didReceive challenge: URLAuthenticationChallenge,
-                    completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
-        if challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
-           let trust = challenge.protectionSpace.serverTrust {
-            completionHandler(.useCredential, URLCredential(trust: trust))
-        } else {
-            completionHandler(.performDefaultHandling, nil)
-        }
-    }
-}
-
-private final class UploadProgress: NSObject, URLSessionTaskDelegate {
-    let onProgress: (Int64) -> Void
-    init(_ onProgress: @escaping (Int64) -> Void) { self.onProgress = onProgress }
-
-    func urlSession(_ session: URLSession, task: URLSessionTask, didSendBodyData bytesSent: Int64,
-                    totalBytesSent: Int64, totalBytesExpectedToSend: Int64) {
-        onProgress(totalBytesSent)
-    }
-
-    func urlSession(_ session: URLSession, task: URLSessionTask, didReceive challenge: URLAuthenticationChallenge,
-                    completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
-        if let trust = challenge.protectionSpace.serverTrust {
-            completionHandler(.useCredential, URLCredential(trust: trust))
-        } else {
-            completionHandler(.performDefaultHandling, nil)
-        }
-    }
-}
-
-/// Finds this device's Wi-Fi IPv4 address so we can scan the local subnet.
-enum NetworkInterfaces {
-    struct Subnet {
-        let ownAddress: String
-        let hosts: [String]
-    }
-
-    static func localIPv4Subnet() -> Subnet? {
-        var ifaddr: UnsafeMutablePointer<ifaddrs>?
-        guard getifaddrs(&ifaddr) == 0, let first = ifaddr else { return nil }
-        defer { freeifaddrs(ifaddr) }
-
-        for pointer in sequence(first: first, next: { $0.pointee.ifa_next }) {
-            let iface = pointer.pointee
-            guard let addr = iface.ifa_addr, addr.pointee.sa_family == UInt8(AF_INET) else { continue }
-            let name = String(cString: iface.ifa_name)
-            guard name == "en0" || name.hasPrefix("bridge") else { continue }
-            var sin = addr.withMemoryRebound(to: sockaddr_in.self, capacity: 1) { $0.pointee }
-            var buffer = [CChar](repeating: 0, count: Int(INET_ADDRSTRLEN))
-            inet_ntop(AF_INET, &sin.sin_addr, &buffer, socklen_t(INET_ADDRSTRLEN))
-            let ip = String(cString: buffer)
-            let parts = ip.split(separator: ".")
-            guard parts.count == 4 else { continue }
-            let prefix = parts.prefix(3).joined(separator: ".")
-            // Always scan the surrounding /24 — large subnets would take too long.
-            return Subnet(ownAddress: ip, hosts: (1...254).map { "\(prefix).\($0)" })
-        }
-        return nil
     }
 }
