@@ -66,9 +66,9 @@ struct StickyNoteWidgetView: View {
         }
         .containerBackground(for: .widget) {
             if let note = entry.note, entry.moduleEnabled {
-                note.color.color.gradient
+                Rectangle().fill(note.color.color.gradient)
             } else {
-                Color.yellow.opacity(0.4).gradient
+                Rectangle().fill(Color.yellow.opacity(0.4).gradient)
             }
         }
     }
