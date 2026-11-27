@@ -7,13 +7,11 @@ import UserNotifications
 final class ShieldActionExtension: ShieldActionDelegate {
     override func handle(action: ShieldAction, for application: ApplicationToken,
                          completionHandler: @escaping (ShieldActionResponse) -> Void) {
-        switch action {
-        case .primaryButtonPressed:
+        // An if-statement keeps this correct if Apple adds new button actions.
+        if action == .primaryButtonPressed {
             AppLockEngine.setPending(application)
             postUnlockNotification { completionHandler(.defer) }
-        case .secondaryButtonPressed:
-            completionHandler(.close)
-        @unknown default:
+        } else {
             completionHandler(.close)
         }
     }
