@@ -53,3 +53,15 @@ struct ReceiveFilesControl: ControlWidget {
         .description("Become visible to Windows, Linux and Android devices running LocalSend.")
     }
 }
+
+struct ScanQRControl: ControlWidget {
+    var body: some ControlWidgetConfiguration {
+        StaticControlConfiguration(kind: "com.switchboard.control.scanQR") {
+            ControlWidgetButton(action: OpenURLIntent(DeepLink.scanQR.url)) {
+                Label("Scan QR Code", systemImage: "qrcode.viewfinder")
+            }
+        }
+        .displayName("Scan QR Code")
+        .description("Scan a code and keep it in your history.")
+    }
+}

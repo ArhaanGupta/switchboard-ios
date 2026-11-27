@@ -10,5 +10,6 @@ struct SwitchboardWidgets: WidgetBundle {
         NewStickyNoteControl()
         FloatingTimerControl()
         ReceiveFilesControl()
+        ScanQRControl()
     }
 }
