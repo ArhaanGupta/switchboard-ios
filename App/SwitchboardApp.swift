@@ -2,8 +2,14 @@ import SwiftUI
 
 @main
 struct SwitchboardApp: App {
-    @State private var model = AppModel()
+    @State private var model: AppModel
     @Environment(\.scenePhase) private var scenePhase
+
+    init() {
+        // Must run before AppModel loads its stores.
+        DemoData.seedIfRequested()
+        _model = State(initialValue: AppModel())
+    }
 
     var body: some Scene {
         WindowGroup {
