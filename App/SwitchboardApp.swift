@@ -2,6 +2,7 @@ import SwiftUI
 
 @main
 struct SwitchboardApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @State private var model: AppModel
     @Environment(\.scenePhase) private var scenePhase
 
@@ -16,6 +17,7 @@ struct SwitchboardApp: App {
             HomeView()
                 .environment(model)
                 .onOpenURL { model.handle(url: $0) }
+                .onAppear { appDelegate.connect { [model] url in model.handle(url: url) } }
                 .onChange(of: scenePhase) { _, phase in
                     if phase == .active { model.appBecameActive() }
                 }
