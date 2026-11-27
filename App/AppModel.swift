@@ -16,6 +16,7 @@ final class AppModel {
     let shield = ShieldController()
     let share = LocalSendService()
     let floating = FloatingController()
+    let qr = QRModel()
 
     struct Toast: Identifiable, Equatable {
         let id = UUID()
@@ -50,6 +51,8 @@ final class AppModel {
             share.stop()
         case .floatingWindow:
             floating.stop()
+        case .qrCode:
+            break
         }
     }
 
@@ -58,6 +61,7 @@ final class AppModel {
     func appBecameActive() {
         clipboard.reload()
         sticky.reload()
+        qr.reload()
         if isEnabled(.clipboard) { clipboard.captureOnOpenIfNeeded() }
         if isEnabled(.shield) { Task { await shield.refresh() } }
     }
@@ -80,6 +84,8 @@ final class AppModel {
             if let mode = FloatingController.Mode(rawValue: raw) { floating.mode = mode }
         case .receiveFiles:
             share.start()
+        case .scanQR:
+            qr.presented = nil
         case .module:
             break
         }

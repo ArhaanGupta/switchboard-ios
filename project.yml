@@ -50,6 +50,8 @@ targets:
         UIBackgroundModes: [audio]          # required for Picture-in-Picture (Floating Window)
         UIFileSharingEnabled: true          # received files show up in the Files app
         LSSupportsOpeningDocumentsInPlace: true
+        NSCameraUsageDescription: Switchboard uses the camera to scan QR codes.
+        NSPhotoLibraryUsageDescription: Switchboard reads QR codes from photos you choose.
         NSLocalNetworkUsageDescription: Switchboard finds nearby computers and phones running LocalSend so you can send and receive files.
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
@@ -70,6 +72,8 @@ targets:
         product: ShieldCore
       - package: SwitchboardKit
         product: LocalSendCore
+      - package: SwitchboardKit
+        product: QRCore
       - target: SwitchboardKeyboard
       - target: SwitchboardWidgets
       - target: SwitchboardShield

@@ -39,6 +39,7 @@ struct ModuleScreen: View {
         case .shield: ShieldScreen()
         case .shareAnywhere: ShareScreen()
         case .floatingWindow: FloatingScreen()
+        case .qrCode: QRScreen()
         }
     }
 }

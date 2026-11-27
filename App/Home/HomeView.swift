@@ -126,6 +126,7 @@ private struct StatusLine: View {
         case .shield: return model.shield.statusText
         case .shareAnywhere: return model.share.isRunning ? "Visible as \(model.share.alias)" : "Ready"
         case .floatingWindow: return model.floating.isFloating ? "Floating now" : "Ready"
+        case .qrCode: return "\(model.qr.history.count) saved"
         }
     }
 
