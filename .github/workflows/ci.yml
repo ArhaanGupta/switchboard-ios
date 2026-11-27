@@ -39,3 +39,63 @@ jobs:
             -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO \
             | (command -v xcbeautify >/dev/null && xcbeautify || cat)
+
+  ui-tests:
+    name: UI tests + screenshots
+    runs-on: macos-26
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate Xcode project
+        run: xcodegen generate
+      - name: Boot simulator
+        id: sim
+        run: |
+          UDID=$(xcrun simctl list devices available -j | python3 -c "
+          import sys, json
+          d = json.load(sys.stdin)['devices']
+          runtimes = sorted((k for k in d if 'iOS' in k), key=lambda k: [int(x) for x in k.split('iOS-')[1].split('-')])
+          for rt in reversed(runtimes):
+              phones = [x for x in d[rt] if x['name'].startswith('iPhone') and 'Pro' in x['name'] and 'Max' not in x['name']]
+              if phones:
+                  print(phones[-1]['udid']); break
+          ")
+          echo "Using simulator $UDID"
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl status_bar "$UDID" override --time "9:41" --batteryState charged --batteryLevel 100 --cellularBars 4 --wifiBars 3
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+      - name: Run UI tests
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project Switchboard.xcodeproj \
+            -scheme Switchboard \
+            -destination "id=${{ steps.sim.outputs.udid }}" \
+            -derivedDataPath build \
+            -resultBundlePath build/UITests.xcresult \
+            CODE_SIGNING_ALLOWED=NO \
+            | (command -v xcbeautify >/dev/null && xcbeautify || cat)
+      - name: Export screenshots
+        if: always()
+        run: |
+          xcrun xcresulttool export attachments --path build/UITests.xcresult --output-path build/attachments
+          python3 scripts/export_screenshots.py build/attachments docs/screenshots
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: docs/screenshots
+      - name: Commit screenshots
+        # Opt-in: include [screenshots] in a commit message on main.
+        if: github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[screenshots]')
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/screenshots
+          git diff --cached --quiet || git commit -m "docs: update README screenshots [skip ci]"
+          git push
