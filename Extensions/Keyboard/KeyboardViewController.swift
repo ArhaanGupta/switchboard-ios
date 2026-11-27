@@ -91,6 +91,13 @@ final class KeyboardViewController: UIInputViewController {
     private func insert(_ text: String) {
         textDocumentProxy.insertText(text)
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        // One-tap flow: paste the clip, then hop back to the keyboard you were typing with.
+        let returnAfterPaste = AppGroup.defaults.object(forKey: SharedKey.keyboardReturnAfterPaste) as? Bool ?? true
+        if returnAfterPaste {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) { [weak self] in
+                self?.advanceToNextInputMode()
+            }
+        }
     }
 }
 

@@ -28,6 +28,8 @@ public struct FeatureFlags {
 public enum SharedKey {
     public static let keyboardLastSeen = "keyboard.lastSeen"
     public static let keyboardHasFullAccess = "keyboard.hasFullAccess"
+    /// Jump back to the previous keyboard after pasting a clip (default on).
+    public static let keyboardReturnAfterPaste = "keyboard.returnAfterPaste"
     public static let pasteboardChangeCount = "clipboard.lastChangeCount"
     public static let shieldUpstreamDNS = "shield.upstream"
     public static let shieldBlockMode = "shield.blockMode"
